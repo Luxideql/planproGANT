@@ -430,7 +430,7 @@ export function GanttChart({
                   )}
 
                   {w > 60 && (
-                    <text x={x + 10} y={barY + barH / 2 + 4} fontSize={10}
+                    <text x={x + 10} y={barY + barH / 2 + 4} fontSize={12}
                       fill="white" fontWeight={600} className="select-none"
                       clipPath={task.progress > 0 ? `url(#bar-clip-${task.id})` : undefined}>
                       {task.progress > 0 ? `${task.progress}%` : employee?.name ?? ''}
