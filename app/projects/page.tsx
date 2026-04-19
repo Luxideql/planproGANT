@@ -82,7 +82,7 @@ export default function ProjectsPage() {
         }
       />
 
-      <div className="flex-1 p-6 space-y-4">
+      <div className="flex-1 p-3 md:p-6 space-y-4">
         {projects.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 py-20 text-center">
             <div className="text-4xl mb-4">📋</div>
@@ -162,7 +162,7 @@ export default function ProjectsPage() {
                       </button>
                     </div>
                   ) : (
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto"><table className="w-full text-sm min-w-[640px]">
                       <thead>
                         <tr className="text-xs text-zinc-400 border-b border-zinc-100 dark:border-zinc-700">
                           <th className="px-5 py-2.5 text-left font-medium">Назва</th>
@@ -229,7 +229,7 @@ export default function ProjectsPage() {
                           )
                         })}
                       </tbody>
-                    </table>
+                    </table></div>
                   )}
                   <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-700">
                     <Button variant="ghost" size="sm"

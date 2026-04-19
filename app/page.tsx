@@ -58,7 +58,7 @@ export default function DashboardPage() {
     <div className="flex flex-col flex-1">
       <Topbar title="Дашборд" subtitle="Огляд виробничого планування" />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6">
         {schedule?.hasCycle && (
           <div className="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 px-5 py-3.5 text-sm text-red-700">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -67,7 +67,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
           {stats.map(({ label, value, icon: Icon, color, bg }) => (
             <Card key={label}>
               <CardContent className="py-4">

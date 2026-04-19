@@ -61,7 +61,7 @@ export default function TeamPage() {
         }
       />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6">
         {/* Alerts */}
         {(totalOverloaded > 0 || totalConflicts > 0) && (
           <div className="flex items-center gap-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-5 py-3.5 text-sm text-amber-800 dark:text-amber-400">
@@ -84,7 +84,7 @@ export default function TeamPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
             {employees.map(emp => {
               const wl = workloads.find(w => w.employee.id === emp.id)
               const overloaded = (wl?.totalOverloaded ?? 0) > 0

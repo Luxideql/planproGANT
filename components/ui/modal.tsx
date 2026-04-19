@@ -29,15 +29,17 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm sm:p-4"
       onClick={e => { if (e.target === overlayRef.current) onClose() }}
     >
       <div className={cn(
-        'relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] w-full',
-        size === 'sm' && 'max-w-sm',
-        size === 'md' && 'max-w-lg',
-        size === 'lg' && 'max-w-2xl',
-        size === 'xl' && 'max-w-4xl',
+        'relative bg-white dark:bg-zinc-900 shadow-2xl flex flex-col w-full',
+        'rounded-t-2xl sm:rounded-2xl',
+        'max-h-[92vh] sm:max-h-[90vh]',
+        size === 'sm' && 'sm:max-w-sm',
+        size === 'md' && 'sm:max-w-lg',
+        size === 'lg' && 'sm:max-w-2xl',
+        size === 'xl' && 'sm:max-w-4xl',
       )}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
