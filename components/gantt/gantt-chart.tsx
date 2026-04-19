@@ -218,7 +218,7 @@ export function GanttChart({
                     <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill="#F8FAFC" />
                     <rect x={4} y={y + ROW_HEIGHT / 2 - 6} width={3} height={12}
                       fill={row.project.color} rx={2} />
-                    <text x={14} y={y + ROW_HEIGHT / 2 + 5} fontSize={12} fontWeight={700}
+                    <text x={14} y={y + ROW_HEIGHT / 2 + 5} fontSize={13} fontWeight={700}
                       fill="#18181B" className="select-none">
                       {row.project.name}
                     </text>
@@ -234,7 +234,7 @@ export function GanttChart({
                       <rect x={20} y={y} width={LABEL_WIDTH - 24} height={ROW_HEIGHT} />
                     </clipPath>
                   </defs>
-                  <text x={20} y={y + ROW_HEIGHT / 2 + 4} fontSize={11} fill="#3F3F46"
+                  <text x={20} y={y + ROW_HEIGHT / 2 + 5} fontSize={13} fill="#3F3F46"
                     className="select-none" clipPath={`url(#clip-label-${task.id})`}>
                     {task.name}
                   </text>
@@ -296,7 +296,7 @@ export function GanttChart({
             {months.map((m, i) => (
               <g key={i}>
                 <rect x={m.x} y={0} width={m.width} height={30} fill="white" />
-                <text x={m.x + 8} y={20} fontSize={12} fontWeight={600} fill="#3F3F46" className="select-none">
+                <text x={m.x + 8} y={22} fontSize={13} fontWeight={700} fill="#3F3F46" className="select-none">
                   {m.label}
                 </text>
               </g>
@@ -310,15 +310,15 @@ export function GanttChart({
               if (viewMode === 'month' && day.getDate() !== 1 && day.getDate() !== 15) return null
               return (
                 <g key={i}>
-                  <text x={x + DAY_WIDTH / 2} y={46} textAnchor="middle"
-                    fontSize={10}
-                    fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#71717A'}
-                    fontWeight={isToday ? 700 : 400}
+                  <text x={x + DAY_WIDTH / 2} y={44} textAnchor="middle"
+                    fontSize={13}
+                    fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#52525B'}
+                    fontWeight={isToday ? 700 : 500}
                     className="select-none">
                     {format(day, 'd')}
                   </text>
-                  <text x={x + DAY_WIDTH / 2} y={60} textAnchor="middle"
-                    fontSize={8}
+                  <text x={x + DAY_WIDTH / 2} y={62} textAnchor="middle"
+                    fontSize={11}
                     fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#A1A1AA'}
                     fontWeight={isToday ? 700 : 400}
                     className="select-none">
