@@ -21,7 +21,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-zinc-800">
         <div className="flex items-center gap-3">
-          <Image src="/image-Photoroom (1).png" alt="Logo" width={36} height={36} className="shrink-0" />
+          <Image src="/logo.png" alt="Logo" width={36} height={36} className="shrink-0" />
           <div>
             <p className="text-sm font-bold text-white">PlanPro</p>
             <p className="text-[10px] text-zinc-500">Виробниче планування</p>
