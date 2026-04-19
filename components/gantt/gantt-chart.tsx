@@ -49,6 +49,7 @@ export function GanttChart({
   } | null>(null)
   const [hoveredTask, setHoveredTask] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const didDragRef = useRef(false)
 
   const today = new Date()
   const DAY_WIDTH = DAY_WIDTH_BY_MODE[viewMode]
@@ -168,6 +169,7 @@ export function GanttChart({
   ) => {
     e.preventDefault()
     e.stopPropagation()
+    didDragRef.current = false
     setDragging({ taskId: task.id, mode, startX: e.clientX, currentX: e.clientX, origStart: task.startDate, origEnd: task.endDate, hasMoved: false })
   }, [])
 
@@ -180,6 +182,7 @@ export function GanttChart({
 
   const handleMouseUp = useCallback(() => {
     if (!dragging || !dragging.hasMoved) { setDragging(null); return }
+    didDragRef.current = true
     const deltaDays = Math.round((dragging.currentX - dragging.startX) / DAY_WIDTH)
     const task = tasks.find(t => t.id === dragging.taskId)
     if (task && deltaDays !== 0) {
@@ -436,7 +439,7 @@ export function GanttChart({
                 <g key={`bar-${task.id}`}
                   onMouseEnter={() => setHoveredTask(task.id)}
                   onMouseLeave={() => setHoveredTask(null)}
-                  onClick={() => { if (!dragging?.hasMoved) onTaskClick?.(task) }}
+                  onClick={() => { if (!didDragRef.current) onTaskClick?.(task) }}
                 >
                   {isCritical && (
                     <rect x={x} y={barY - 2} width={w} height={barH + 4}
