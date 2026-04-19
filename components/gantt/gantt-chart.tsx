@@ -62,7 +62,9 @@ export function GanttChart({
     if (todayIdx === -1) return
     const targetX = todayIdx * DAY_WIDTH - el.clientWidth / 2 + DAY_WIDTH / 2
     el.scrollLeft = Math.max(0, targetX)
-  }, [viewMode, viewOffset, days, DAY_WIDTH])
+    // only scroll when view intentionally changes, not on every re-render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, viewOffset])
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects])
   const employeeMap = useMemo(() => new Map(employees.map(e => [e.id, e])), [employees])
