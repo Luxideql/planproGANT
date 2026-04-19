@@ -334,16 +334,20 @@ export function GanttChart({
                 )
               }
 
+              const cellBg = isToday ? '#DBEAFE' : isWE ? '#FEE2E2' : 'white'
               return (
                 <g key={i}>
-                  <text x={x + DAY_WIDTH / 2} y={44} textAnchor="middle"
-                    fontSize={viewMode === 'day' ? 15 : 13}
-                    fill={dateColor} fontWeight={isToday ? 700 : 500}
+                  {/* cell border */}
+                  <rect x={x} y={30} width={DAY_WIDTH} height={HEADER_HEIGHT - 30}
+                    fill={cellBg} stroke="#E4E4E7" strokeWidth={0.5} />
+                  <text x={x + DAY_WIDTH / 2} y={48} textAnchor="middle"
+                    fontSize={viewMode === 'day' ? 16 : 14}
+                    fill={dateColor} fontWeight={isToday ? 700 : 600}
                     className="select-none">
                     {format(day, 'd')}
                   </text>
-                  <text x={x + DAY_WIDTH / 2} y={62} textAnchor="middle"
-                    fontSize={viewMode === 'day' ? 12 : 11}
+                  <text x={x + DAY_WIDTH / 2} y={64} textAnchor="middle"
+                    fontSize={viewMode === 'day' ? 13 : 12}
                     fill={subColor} fontWeight={isToday ? 700 : 400}
                     className="select-none">
                     {format(day, 'EE', { locale: uk }).slice(0, 2)}
