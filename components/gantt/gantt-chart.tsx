@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const DAY_WIDTH_BY_MODE = { day: 80, week: 44, month: 20 } as const
+const HANDLE_W = 8
 const ROW_HEIGHT = 44
 const HEADER_HEIGHT = 72
 const LABEL_WIDTH = 240
@@ -37,7 +38,14 @@ export function GanttChart({
 }: GanttChartProps) {
   const [viewOffset, setViewOffset] = useState(0)
   const [viewMode, setViewMode] = useState<ViewMode>('week')
-  const [dragging, setDragging] = useState<{ taskId: string; startX: number; origStart: string; origEnd: string } | null>(null)
+  const [dragging, setDragging] = useState<{
+    taskId: string
+    mode: 'move' | 'resize-start' | 'resize-end'
+    startX: number
+    origStart: string
+    origEnd: string
+    hasMoved: boolean
+  } | null>(null)
   const [hoveredTask, setHoveredTask] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -154,14 +162,12 @@ export function GanttChart({
     return result
   }, [days])
 
-  const handleMouseDown = useCallback((e: React.MouseEvent, task: Task) => {
+  const handleMouseDown = useCallback((
+    e: React.MouseEvent, task: Task, mode: 'move' | 'resize-start' | 'resize-end'
+  ) => {
     e.preventDefault()
-    setDragging({
-      taskId: task.id,
-      startX: e.clientX,
-      origStart: task.startDate,
-      origEnd: task.endDate,
-    })
+    e.stopPropagation()
+    setDragging({ taskId: task.id, mode, startX: e.clientX, origStart: task.startDate, origEnd: task.endDate, hasMoved: false })
   }, [])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -173,10 +179,19 @@ export function GanttChart({
     const task = tasks.find(t => t.id === dragging.taskId)
     if (!task) return
 
-    const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
-    const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+    setDragging(d => d ? { ...d, hasMoved: true } : d)
 
-    onTaskDateChange?.(task, newStart, newEnd)
+    if (dragging.mode === 'move') {
+      const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
+      const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+      onTaskDateChange?.(task, newStart, newEnd)
+    } else if (dragging.mode === 'resize-start') {
+      const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
+      if (newStart < dragging.origEnd) onTaskDateChange?.(task, newStart, dragging.origEnd)
+    } else if (dragging.mode === 'resize-end') {
+      const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+      if (newEnd > dragging.origStart) onTaskDateChange?.(task, dragging.origStart, newEnd)
+    }
   }, [dragging, tasks, onTaskDateChange])
 
   const handleMouseUp = useCallback(() => {
@@ -266,7 +281,7 @@ export function GanttChart({
           <svg
             width={totalWidth}
             height={totalHeight}
-            className={dragging ? 'cursor-grabbing' : 'cursor-default'}
+            className={dragging?.mode === 'move' ? 'cursor-grabbing' : dragging ? 'cursor-ew-resize' : 'cursor-default'}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
@@ -397,11 +412,9 @@ export function GanttChart({
 
               return (
                 <g key={`bar-${task.id}`}
-                  style={{ cursor: onTaskDateChange ? 'grab' : 'pointer' }}
                   onMouseEnter={() => setHoveredTask(task.id)}
                   onMouseLeave={() => setHoveredTask(null)}
-                  onMouseDown={onTaskDateChange ? e => handleMouseDown(e, task) : undefined}
-                  onClick={() => !dragging && onTaskClick?.(task)}
+                  onClick={() => { if (!dragging?.hasMoved) onTaskClick?.(task) }}
                 >
                   {isCritical && (
                     <rect x={x} y={barY - 2} width={w} height={barH + 4}
@@ -409,7 +422,10 @@ export function GanttChart({
                       strokeWidth={2} opacity={0.8} />
                   )}
                   <rect x={x} y={barY} width={w} height={barH}
-                    rx={barH / 2} fill={barColor} opacity={isHovered ? 1 : 0.85} />
+                    rx={barH / 2} fill={barColor} opacity={isHovered ? 1 : 0.85}
+                    style={{ cursor: onTaskDateChange ? 'grab' : 'pointer' }}
+                    onMouseDown={onTaskDateChange ? e => handleMouseDown(e, task, 'move') : undefined}
+                  />
 
                   {task.progress > 0 && (
                     <>
@@ -421,20 +437,44 @@ export function GanttChart({
                       <rect x={x} y={barY}
                         width={Math.max(barH, w * task.progress / 100)}
                         height={barH} rx={barH / 2} fill={barColor}
-                        clipPath={`url(#bar-clip-${task.id})`} />
+                        clipPath={`url(#bar-clip-${task.id})`}
+                        style={{ cursor: onTaskDateChange ? 'grab' : 'pointer' }}
+                        onMouseDown={onTaskDateChange ? e => handleMouseDown(e, task, 'move') : undefined}
+                      />
                       <rect x={x} y={barY}
                         width={Math.max(barH, w * task.progress / 100)}
                         height={barH} rx={barH / 2} fill="rgba(0,0,0,0.15)"
-                        clipPath={`url(#bar-clip-${task.id})`} />
+                        clipPath={`url(#bar-clip-${task.id})`}
+                        style={{ pointerEvents: 'none' }}
+                      />
                     </>
                   )}
 
                   {w > 60 && (
-                    <text x={x + 10} y={barY + barH / 2 + 4} fontSize={12}
+                    <text x={x + 12} y={barY + barH / 2 + 4} fontSize={12}
                       fill="white" fontWeight={600} className="select-none"
+                      style={{ pointerEvents: 'none' }}
                       clipPath={task.progress > 0 ? `url(#bar-clip-${task.id})` : undefined}>
                       {task.progress > 0 ? `${task.progress}%` : employee?.name ?? ''}
                     </text>
+                  )}
+
+                  {/* Left resize handle */}
+                  {onTaskDateChange && (
+                    <rect x={x} y={barY} width={HANDLE_W} height={barH}
+                      rx={barH / 2} fill="rgba(0,0,0,0.2)"
+                      style={{ cursor: 'ew-resize' }}
+                      onMouseDown={e => handleMouseDown(e, task, 'resize-start')}
+                    />
+                  )}
+
+                  {/* Right resize handle */}
+                  {onTaskDateChange && (
+                    <rect x={x + w - HANDLE_W} y={barY} width={HANDLE_W} height={barH}
+                      rx={barH / 2} fill="rgba(0,0,0,0.2)"
+                      style={{ cursor: 'ew-resize' }}
+                      onMouseDown={e => handleMouseDown(e, task, 'resize-end')}
+                    />
                   )}
 
                   {employee && (
