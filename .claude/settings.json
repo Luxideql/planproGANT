@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc*)",
+      "Bash(npm run *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(ls *)",
+      "Bash(node -e *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "out=$(npx tsc --noEmit --pretty false 2>&1 | head -30); if [ -n \"$out\" ]; then echo \"$out\"; exit 2; fi",
+            "timeout": 60,
+            "asyncRewake": true,
+            "rewakeMessage": "TypeScript errors after edit:",
+            "rewakeSummary": "TypeScript errors found",
+            "statusMessage": "Checking TypeScript..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /c/Users/stask/Downloads/gant && changed=$(git diff --stat HEAD 2>/dev/null); if [ -n \"$changed\" ]; then echo \"--- Змінені файли ---\"; echo \"$changed\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

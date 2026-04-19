@@ -1,0 +1,492 @@
+'use client'
+
+import { useRef, useState, useMemo, useCallback } from 'react'
+import {
+  eachDayOfInterval, parseISO, format, addMonths, startOfMonth,
+  endOfMonth, isSameDay, isWeekend, differenceInDays, addDays,
+} from 'date-fns'
+import { uk } from 'date-fns/locale'
+import type { Task, Project, Employee } from '@/lib/types'
+import { isOverdue, formatDate } from '@/lib/utils'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const DAY_WIDTH = 32      // px per day
+const ROW_HEIGHT = 40     // px per task row
+const HEADER_HEIGHT = 60  // timeline header
+const LABEL_WIDTH = 240   // left label column
+
+type ViewMode = 'day' | 'week' | 'month'
+
+interface GanttChartProps {
+  tasks: Task[]
+  projects: Project[]
+  employees: Employee[]
+  criticalPathIds?: string[]
+  onTaskClick?: (task: Task) => void
+  onTaskDateChange?: (task: Task, newStart: string, newEnd: string) => void
+}
+
+export function GanttChart({
+  tasks,
+  projects,
+  employees,
+  criticalPathIds = [],
+  onTaskClick,
+  onTaskDateChange,
+}: GanttChartProps) {
+  const [viewOffset, setViewOffset] = useState(0) // months offset from today
+  const [viewMode, setViewMode] = useState<ViewMode>('week')
+  const [dragging, setDragging] = useState<{ taskId: string; startX: number; origStart: string; origEnd: string } | null>(null)
+  const [hoveredTask, setHoveredTask] = useState<string | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  const today = new Date()
+  const rangeStart = startOfMonth(addMonths(today, viewOffset - 1))
+  const rangeEnd = endOfMonth(addMonths(today, viewOffset + 2))
+
+  const days = useMemo(
+    () => eachDayOfInterval({ start: rangeStart, end: rangeEnd }),
+    [rangeStart, rangeEnd],
+  )
+
+  const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects])
+  const employeeMap = useMemo(() => new Map(employees.map(e => [e.id, e])), [employees])
+
+  // Group tasks by project
+  const grouped = useMemo(() => {
+    const groups = new Map<string, Task[]>()
+    for (const task of tasks) {
+      if (!groups.has(task.projectId)) groups.set(task.projectId, [])
+      groups.get(task.projectId)!.push(task)
+    }
+    return groups
+  }, [tasks])
+
+  // Flat list: [project row, task rows…]
+  const rows = useMemo(() => {
+    const result: ({ type: 'project'; project: Project } | { type: 'task'; task: Task; project: Project })[] = []
+    for (const project of projects) {
+      result.push({ type: 'project', project })
+      const projectTasks = grouped.get(project.id) ?? []
+      for (const task of projectTasks) {
+        result.push({ type: 'task', task, project })
+      }
+    }
+    return result
+  }, [projects, grouped])
+
+  const totalWidth = days.length * DAY_WIDTH
+  const totalHeight = rows.length * ROW_HEIGHT + HEADER_HEIGHT
+
+  function dayX(date: string | Date): number {
+    const d = typeof date === 'string' ? parseISO(date) : date
+    const idx = days.findIndex(day => isSameDay(day, d))
+    if (idx === -1) return -1
+    return LABEL_WIDTH + idx * DAY_WIDTH
+  }
+
+  function taskWidth(task: Task): number {
+    const startIdx = days.findIndex(d => isSameDay(d, parseISO(task.startDate)))
+    const endIdx = days.findIndex(d => isSameDay(d, parseISO(task.endDate)))
+    if (startIdx === -1 || endIdx === -1) return 0
+    return (endIdx - startIdx + 1) * DAY_WIDTH
+  }
+
+  // Draw dependency arrows
+  const arrows = useMemo(() => {
+    const taskRowIndex = new Map<string, number>()
+    let rowIdx = 0
+    for (const row of rows) {
+      if (row.type === 'task') taskRowIndex.set(row.task.id, rowIdx)
+      rowIdx++
+    }
+
+    return tasks.flatMap(task =>
+      task.dependencies.map(depId => {
+        const fromTask = tasks.find(t => t.id === depId)
+        if (!fromTask) return null
+        const fromRow = taskRowIndex.get(depId) ?? -1
+        const toRow = taskRowIndex.get(task.id) ?? -1
+        if (fromRow === -1 || toRow === -1) return null
+
+        const x1 = dayX(fromTask.endDate) + DAY_WIDTH
+        const y1 = HEADER_HEIGHT + fromRow * ROW_HEIGHT + ROW_HEIGHT / 2
+        const x2 = dayX(task.startDate)
+        const y2 = HEADER_HEIGHT + toRow * ROW_HEIGHT + ROW_HEIGHT / 2
+
+        return { id: `${depId}-${task.id}`, x1, y1, x2, y2 }
+      }).filter(Boolean)
+    )
+  }, [rows, tasks, days])
+
+  const months = useMemo(() => {
+    const result: { label: string; x: number; width: number }[] = []
+    let currentMonth = ''
+    let startX = LABEL_WIDTH
+
+    for (let i = 0; i < days.length; i++) {
+      const m = format(days[i], 'LLLL yyyy', { locale: uk })
+      if (m !== currentMonth) {
+        if (currentMonth) {
+          result[result.length - 1].width = LABEL_WIDTH + i * DAY_WIDTH - result[result.length - 1].x
+        }
+        result.push({ label: m, x: LABEL_WIDTH + i * DAY_WIDTH, width: 0 })
+        currentMonth = m
+      }
+    }
+    if (result.length > 0) {
+      result[result.length - 1].width = LABEL_WIDTH + days.length * DAY_WIDTH - result[result.length - 1].x
+    }
+    return result
+  }, [days])
+
+  const handleMouseDown = useCallback((e: React.MouseEvent, task: Task) => {
+    e.preventDefault()
+    setDragging({
+      taskId: task.id,
+      startX: e.clientX,
+      origStart: task.startDate,
+      origEnd: task.endDate,
+    })
+  }, [])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragging) return
+    const deltaPx = e.clientX - dragging.startX
+    const deltaDays = Math.round(deltaPx / DAY_WIDTH)
+    if (deltaDays === 0) return
+
+    const task = tasks.find(t => t.id === dragging.taskId)
+    if (!task) return
+
+    const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
+    const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+
+    onTaskDateChange?.(task, newStart, newEnd)
+  }, [dragging, tasks, onTaskDateChange])
+
+  const handleMouseUp = useCallback(() => {
+    setDragging(null)
+  }, [])
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="icon" onClick={() => setViewOffset(v => v - 1)}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setViewOffset(0)}>Сьогодні</Button>
+          <Button variant="outline" size="icon" onClick={() => setViewOffset(v => v + 1)}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-0.5">
+          {(['day', 'week', 'month'] as ViewMode[]).map(mode => (
+            <button
+              key={mode}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${viewMode === mode ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              onClick={() => setViewMode(mode)}
+            >
+              {mode === 'day' ? 'День' : mode === 'week' ? 'Тиждень' : 'Місяць'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="overflow-auto rounded-xl border border-zinc-200 bg-white">
+        <svg
+          ref={svgRef}
+          width={LABEL_WIDTH + totalWidth}
+          height={totalHeight}
+          className={dragging ? 'cursor-grabbing' : 'cursor-default'}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {/* === BACKGROUND === */}
+          <rect x={0} y={0} width={LABEL_WIDTH + totalWidth} height={totalHeight} fill="#FAFAFA" />
+          <rect x={0} y={0} width={LABEL_WIDTH} height={totalHeight} fill="white" />
+
+          {/* Day columns */}
+          {days.map((day, i) => {
+            const x = LABEL_WIDTH + i * DAY_WIDTH
+            const isToday = isSameDay(day, today)
+            const isWE = isWeekend(day)
+            return (
+              <rect
+                key={i}
+                x={x}
+                y={HEADER_HEIGHT}
+                width={DAY_WIDTH}
+                height={totalHeight - HEADER_HEIGHT}
+                fill={isToday ? '#DBEAFE' : isWE ? '#F1F5F9' : 'transparent'}
+                opacity={isWE ? 0.6 : 1}
+              />
+            )
+          })}
+
+          {/* Grid lines (rows) */}
+          {rows.map((_, i) => (
+            <line
+              key={i}
+              x1={0}
+              y1={HEADER_HEIGHT + (i + 1) * ROW_HEIGHT}
+              x2={LABEL_WIDTH + totalWidth}
+              y2={HEADER_HEIGHT + (i + 1) * ROW_HEIGHT}
+              stroke="#E4E4E7"
+              strokeWidth={1}
+            />
+          ))}
+
+          {/* Vertical day lines */}
+          {days.map((day, i) => {
+            if (viewMode === 'month' && day.getDate() !== 1) return null
+            if (viewMode === 'week' && day.getDay() !== 1) return null
+            return (
+              <line
+                key={i}
+                x1={LABEL_WIDTH + i * DAY_WIDTH}
+                y1={0}
+                x2={LABEL_WIDTH + i * DAY_WIDTH}
+                y2={totalHeight}
+                stroke="#E4E4E7"
+                strokeWidth={1}
+              />
+            )
+          })}
+
+          {/* === HEADER === */}
+          <rect x={0} y={0} width={LABEL_WIDTH + totalWidth} height={HEADER_HEIGHT} fill="white" />
+          <line x1={0} y1={HEADER_HEIGHT} x2={LABEL_WIDTH + totalWidth} y2={HEADER_HEIGHT} stroke="#E4E4E7" strokeWidth={1} />
+          <line x1={LABEL_WIDTH} y1={0} x2={LABEL_WIDTH} y2={totalHeight} stroke="#E4E4E7" strokeWidth={1} />
+
+          {/* Month labels */}
+          {months.map((m, i) => (
+            <g key={i}>
+              <rect x={m.x} y={0} width={m.width} height={30} fill="white" />
+              <text x={m.x + 8} y={20} fontSize={12} fontWeight={600} fill="#3F3F46"
+                className="select-none">
+                {m.label}
+              </text>
+            </g>
+          ))}
+
+          {/* Day labels */}
+          {days.map((day, i) => {
+            const x = LABEL_WIDTH + i * DAY_WIDTH
+            const isToday = isSameDay(day, today)
+            if (viewMode === 'month' && day.getDate() !== 1 && day.getDate() !== 15) return null
+            return (
+              <text
+                key={i}
+                x={x + DAY_WIDTH / 2}
+                y={50}
+                textAnchor="middle"
+                fontSize={10}
+                fill={isToday ? '#2563EB' : isWeekend(day) ? '#94A3B8' : '#71717A'}
+                fontWeight={isToday ? 700 : 400}
+                className="select-none"
+              >
+                {format(day, 'd')}
+              </text>
+            )
+          })}
+
+          {/* Today line */}
+          {(() => {
+            const x = dayX(today)
+            if (x < LABEL_WIDTH) return null
+            return (
+              <line x1={x + DAY_WIDTH / 2} y1={0} x2={x + DAY_WIDTH / 2} y2={totalHeight}
+                stroke="#2563EB" strokeWidth={2} strokeDasharray="4,3" opacity={0.7} />
+            )
+          })()}
+
+          {/* === ROWS === */}
+          {rows.map((row, rowIdx) => {
+            const y = HEADER_HEIGHT + rowIdx * ROW_HEIGHT
+
+            if (row.type === 'project') {
+              return (
+                <g key={`project-${row.project.id}`}>
+                  <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill="#F8FAFC" />
+                  <rect x={4} y={y + ROW_HEIGHT / 2 - 6} width={3} height={12}
+                    fill={row.project.color} rx={2} />
+                  <text x={14} y={y + ROW_HEIGHT / 2 + 5} fontSize={12} fontWeight={700}
+                    fill="#18181B" className="select-none">
+                    {row.project.name}
+                  </text>
+                </g>
+              )
+            }
+
+            const { task, project } = row
+            const x = dayX(task.startDate)
+            const w = taskWidth(task)
+            const barY = y + 8
+            const barH = ROW_HEIGHT - 16
+            const overdue = isOverdue(task.endDate, task.status)
+            const isCritical = criticalPathIds.includes(task.id)
+            const isHovered = hoveredTask === task.id
+            const employee = employeeMap.get(task.assigneeId)
+            const barColor = overdue ? '#EF4444' : project.color
+
+            return (
+              <g key={`task-${task.id}`}>
+                {/* Label column */}
+                <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill="white" />
+                <text x={20} y={y + ROW_HEIGHT / 2 + 4} fontSize={11} fill="#3F3F46"
+                  className="select-none" clipPath={`url(#clip-label-${task.id})`}>
+                  {task.name}
+                </text>
+                <defs>
+                  <clipPath id={`clip-label-${task.id}`}>
+                    <rect x={20} y={y} width={LABEL_WIDTH - 24} height={ROW_HEIGHT} />
+                  </clipPath>
+                </defs>
+
+                {/* Task bar (only if in view) */}
+                {x >= LABEL_WIDTH && w > 0 && (
+                  <g
+                    style={{ cursor: onTaskDateChange ? 'grab' : 'pointer' }}
+                    onMouseEnter={() => setHoveredTask(task.id)}
+                    onMouseLeave={() => setHoveredTask(null)}
+                    onMouseDown={onTaskDateChange ? e => handleMouseDown(e, task) : undefined}
+                    onClick={() => !dragging && onTaskClick?.(task)}
+                  >
+                    {/* Critical path glow */}
+                    {isCritical && (
+                      <rect x={x} y={barY - 2} width={w} height={barH + 4}
+                        rx={barH / 2 + 2} fill="none" stroke="#F59E0B"
+                        strokeWidth={2} opacity={0.8} />
+                    )}
+
+                    {/* Bar background */}
+                    <rect
+                      x={x} y={barY} width={w} height={barH}
+                      rx={barH / 2}
+                      fill={barColor}
+                      opacity={isHovered ? 1 : 0.85}
+                    />
+
+                    {/* Progress fill */}
+                    {task.progress > 0 && (
+                      <rect
+                        x={x} y={barY}
+                        width={Math.max(barH, w * task.progress / 100)}
+                        height={barH}
+                        rx={barH / 2}
+                        fill={barColor}
+                        opacity={1}
+                        clipPath={`url(#bar-clip-${task.id})`}
+                      />
+                    )}
+                    <defs>
+                      <clipPath id={`bar-clip-${task.id}`}>
+                        <rect x={x} y={barY} width={w} height={barH} rx={barH / 2} />
+                      </clipPath>
+                    </defs>
+
+                    {/* Progress overlay (darker) */}
+                    {task.progress > 0 && (
+                      <rect
+                        x={x} y={barY}
+                        width={Math.max(barH, w * task.progress / 100)}
+                        height={barH}
+                        rx={barH / 2}
+                        fill="rgba(0,0,0,0.15)"
+                        clipPath={`url(#bar-clip-${task.id})`}
+                      />
+                    )}
+
+                    {/* Task label on bar */}
+                    {w > 60 && (
+                      <text
+                        x={x + 10}
+                        y={barY + barH / 2 + 4}
+                        fontSize={10}
+                        fill="white"
+                        fontWeight={600}
+                        className="select-none"
+                        clipPath={`url(#bar-clip-${task.id})`}
+                      >
+                        {task.progress > 0 ? `${task.progress}%` : employee?.name ?? ''}
+                      </text>
+                    )}
+
+                    {/* Assignee dot */}
+                    {employee && (
+                      <circle
+                        cx={x + w + 10}
+                        cy={barY + barH / 2}
+                        r={7}
+                        fill={employee.color}
+                      />
+                    )}
+                  </g>
+                )}
+              </g>
+            )
+          })}
+
+          {/* === DEPENDENCY ARROWS === */}
+          {arrows.map(arrow => {
+            if (!arrow) return null
+            const { id, x1, y1, x2, y2 } = arrow
+            const midX = (x1 + x2) / 2
+            return (
+              <g key={id}>
+                <path
+                  d={`M ${x1} ${y1} C ${midX} ${y1} ${midX} ${y2} ${x2} ${y2}`}
+                  fill="none"
+                  stroke="#94A3B8"
+                  strokeWidth={1.5}
+                  strokeDasharray="4,3"
+                  markerEnd="url(#arrowhead)"
+                />
+              </g>
+            )
+          })}
+
+          {/* Arrow marker */}
+          <defs>
+            <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M 0 0 L 6 3 L 0 6 Z" fill="#94A3B8" />
+            </marker>
+          </defs>
+
+          {/* Sticky label column border */}
+          <line x1={LABEL_WIDTH} y1={0} x2={LABEL_WIDTH} y2={totalHeight} stroke="#E4E4E7" strokeWidth={1} />
+        </svg>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-6 text-xs text-zinc-500 px-1">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-8 rounded-full bg-blue-500 opacity-40" />
+          <span>Задача</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-8 rounded-full bg-blue-500" />
+          <span>Прогрес</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-8 rounded-full bg-red-500 opacity-85" />
+          <span>Прострочено</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-8 rounded-full bg-amber-400 opacity-85" />
+          <span>Критичний шлях</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-blue-500" />
+          <span>Сьогодні</span>
+        </div>
+      </div>
+    </div>
+  )
+}
