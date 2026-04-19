@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { initSheets } from '@/lib/sheets'
 
-export async function POST() {
+export async function GET() {
   try {
     await initSheets()
     return NextResponse.json({ ok: true, message: 'Аркуші ініціалізовано' })
