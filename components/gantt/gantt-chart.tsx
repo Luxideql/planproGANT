@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 
 const DAY_WIDTH = 32
 const ROW_HEIGHT = 40
-const HEADER_HEIGHT = 60
+const HEADER_HEIGHT = 72
 const LABEL_WIDTH = 240
 
 type ViewMode = 'day' | 'week' | 'month'
@@ -265,8 +265,8 @@ export function GanttChart({
               return (
                 <rect key={i} x={x} y={HEADER_HEIGHT} width={DAY_WIDTH}
                   height={totalHeight - HEADER_HEIGHT}
-                  fill={isToday ? '#DBEAFE' : isWE ? '#F1F5F9' : 'transparent'}
-                  opacity={isWE ? 0.6 : 1} />
+                  fill={isToday ? '#DBEAFE' : isWE ? '#FEE2E2' : 'transparent'}
+                  opacity={isWE ? 0.7 : 1} />
               )
             })}
 
@@ -305,15 +305,25 @@ export function GanttChart({
             {days.map((day, i) => {
               const x = i * DAY_WIDTH
               const isToday = isSameDay(day, today)
+              const isWE = isWeekend(day)
               if (viewMode === 'month' && day.getDate() !== 1 && day.getDate() !== 15) return null
               return (
-                <text key={i} x={x + DAY_WIDTH / 2} y={50} textAnchor="middle"
-                  fontSize={10}
-                  fill={isToday ? '#2563EB' : isWeekend(day) ? '#94A3B8' : '#71717A'}
-                  fontWeight={isToday ? 700 : 400}
-                  className="select-none">
-                  {format(day, 'd')}
-                </text>
+                <g key={i}>
+                  <text x={x + DAY_WIDTH / 2} y={46} textAnchor="middle"
+                    fontSize={10}
+                    fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#71717A'}
+                    fontWeight={isToday ? 700 : 400}
+                    className="select-none">
+                    {format(day, 'd')}
+                  </text>
+                  <text x={x + DAY_WIDTH / 2} y={60} textAnchor="middle"
+                    fontSize={8}
+                    fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#A1A1AA'}
+                    fontWeight={isToday ? 700 : 400}
+                    className="select-none">
+                    {format(day, 'EE', { locale: uk }).slice(0, 2)}
+                  </text>
+                </g>
               )
             })}
 
