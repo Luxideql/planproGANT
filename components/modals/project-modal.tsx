@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { PROJECT_COLORS } from '@/lib/utils'
+import { FileAttachments } from '@/components/ui/file-attachments'
 import type { Project } from '@/lib/types'
 
 interface ProjectModalProps {
@@ -116,6 +117,10 @@ export function ProjectModal({ open, onClose, onSave, project }: ProjectModalPro
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
           />
         </div>
+
+        {isEdit && project && (
+          <FileAttachments entityType="project" entityId={project.id} />
+        )}
       </div>
     </Modal>
   )

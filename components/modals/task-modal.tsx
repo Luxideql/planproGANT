@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { FileAttachments } from '@/components/ui/file-attachments'
 import type { Task, Project, Employee } from '@/lib/types'
 
 interface TaskModalProps {
@@ -255,6 +256,10 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
             />
             Каскадно зсунути залежні задачі при зміні дати кінця
           </label>
+        )}
+
+        {isEdit && task && (
+          <FileAttachments entityType="task" entityId={task.id} />
         )}
       </div>
     </Modal>
