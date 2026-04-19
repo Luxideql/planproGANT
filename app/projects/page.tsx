@@ -84,10 +84,10 @@ export default function ProjectsPage() {
 
       <div className="flex-1 p-6 space-y-4">
         {projects.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 py-20 text-center">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 py-20 text-center">
             <div className="text-4xl mb-4">📋</div>
-            <p className="text-zinc-500 font-medium">Немає проєктів</p>
-            <p className="text-zinc-400 text-sm mb-6">Створіть перший проєкт для початку планування</p>
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium">Немає проєктів</p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm mb-6">Створіть перший проєкт для початку планування</p>
             <Button onClick={() => setProjectModal({ open: true })}>
               <Plus className="h-4 w-4" /> Створити проєкт
             </Button>
@@ -104,7 +104,7 @@ export default function ProjectsPage() {
             <Card key={project.id}>
               {/* Project header */}
               <div
-                className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-zinc-50/50 rounded-t-xl transition-colors"
+                className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-700/30 rounded-t-xl transition-colors"
                 onClick={() => toggleExpanded(project.id)}
               >
                 <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: project.color + '20' }}>
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-zinc-900">{project.name}</span>
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{project.name}</span>
                     <Badge className={statusColor(project.status)}>{statusLabel(project.status)}</Badge>
                   </div>
                   <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function ProjectsPage() {
 
               {/* Tasks list */}
               {isExpanded && (
-                <div className="border-t border-zinc-100">
+                <div className="border-t border-zinc-100 dark:border-zinc-700">
                   {projectTasks.length === 0 ? (
                     <div className="px-5 py-6 text-center text-sm text-zinc-400">
                       Немає задач.{' '}
@@ -164,7 +164,7 @@ export default function ProjectsPage() {
                   ) : (
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-xs text-zinc-400 border-b border-zinc-100">
+                        <tr className="text-xs text-zinc-400 border-b border-zinc-100 dark:border-zinc-700">
                           <th className="px-5 py-2.5 text-left font-medium">Назва</th>
                           <th className="px-3 py-2.5 text-left font-medium">Виконавець</th>
                           <th className="px-3 py-2.5 text-left font-medium">Початок</th>
@@ -180,13 +180,13 @@ export default function ProjectsPage() {
                           const employee = employees.find(e => e.id === task.assigneeId)
                           const overdue = isOverdue(task.endDate, task.status)
                           return (
-                            <tr key={task.id} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors last:border-0">
+                            <tr key={task.id} className="border-b border-zinc-50 dark:border-zinc-700/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-700/20 transition-colors last:border-0">
                               <td className="px-5 py-3">
                                 <div className="flex items-center gap-2">
                                   {task.dependencies.length > 0 && (
                                     <span className="text-[10px] text-zinc-400">↳</span>
                                   )}
-                                  <span className="font-medium text-zinc-800">{task.name}</span>
+                                  <span className="font-medium text-zinc-800 dark:text-zinc-200">{task.name}</span>
                                 </div>
                                 {task.description && (
                                   <div className="text-xs text-zinc-400 truncate max-w-xs mt-0.5">{task.description}</div>
@@ -199,15 +199,15 @@ export default function ProjectsPage() {
                                       style={{ backgroundColor: employee.color }}>
                                       {employee.name.charAt(0)}
                                     </div>
-                                    <span className="text-zinc-700">{employee.name}</span>
+                                    <span className="text-zinc-700 dark:text-zinc-300">{employee.name}</span>
                                   </div>
                                 )}
                               </td>
-                              <td className="px-3 py-3 text-zinc-500 tabular-nums">{formatDate(task.startDate)}</td>
-                              <td className={`px-3 py-3 tabular-nums ${overdue ? 'text-red-500 font-medium' : 'text-zinc-500'}`}>
+                              <td className="px-3 py-3 text-zinc-500 dark:text-zinc-400 tabular-nums">{formatDate(task.startDate)}</td>
+                              <td className={`px-3 py-3 tabular-nums ${overdue ? 'text-red-500 font-medium' : 'text-zinc-500 dark:text-zinc-400'}`}>
                                 {overdue && '⚠ '}{formatDate(task.endDate)}
                               </td>
-                              <td className="px-3 py-3 text-zinc-500 tabular-nums">{task.plannedHours}г</td>
+                              <td className="px-3 py-3 text-zinc-500 dark:text-zinc-400 tabular-nums">{task.plannedHours}г</td>
                               <td className="px-3 py-3 w-24">
                                 <Progress value={task.progress} size="sm" showLabel />
                               </td>
@@ -231,7 +231,7 @@ export default function ProjectsPage() {
                       </tbody>
                     </table>
                   )}
-                  <div className="px-5 py-3 border-t border-zinc-100">
+                  <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-700">
                     <Button variant="ghost" size="sm"
                       onClick={() => setTaskModal({ open: true, projectId: project.id })}>
                       <Plus className="h-3.5 w-3.5" /> Додати задачу

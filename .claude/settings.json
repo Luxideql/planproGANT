@@ -8,7 +8,15 @@
       "Bash(git log*)",
       "Bash(git branch*)",
       "Bash(ls *)",
-      "Bash(node -e *)"
+      "Bash(node -e *)",
+      "Bash(vercel whoami)",
+      "Bash(vercel --version)",
+      "Bash(vercel env ls *)",
+      "Bash(vercel project ls *)",
+      "Bash(vercel logs *)",
+      "Bash(vercel blob list *)",
+      "Bash(vercel blob get-store *)",
+      "Bash(vercel blob store get *)"
     ]
   },
   "hooks": {

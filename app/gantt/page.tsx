@@ -85,9 +85,9 @@ export default function GanttPage() {
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Project filter */}
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-0.5">
+          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-0.5">
             <button
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filterProject === 'all' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filterProject === 'all' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
               onClick={() => setFilterProject('all')}
             >
               Всі проєкти
@@ -95,7 +95,7 @@ export default function GanttPage() {
             {projects.map(p => (
               <button
                 key={p.id}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filterProject === p.id ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filterProject === p.id ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
                 onClick={() => setFilterProject(p.id)}
               >
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
@@ -124,17 +124,17 @@ export default function GanttPage() {
 
         {/* Cycle warning */}
         {schedule?.hasCycle && (
-          <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>Циклічна залежність між задачами. Перевірте залежності.</span>
           </div>
         )}
 
         {projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 py-20 text-center">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 py-20 text-center">
             <div className="text-4xl mb-4">📊</div>
-            <p className="text-zinc-500 font-medium">Немає даних для відображення</p>
-            <p className="text-zinc-400 text-sm">Спочатку створіть проєкти та задачі</p>
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium">Немає даних для відображення</p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm">Спочатку створіть проєкти та задачі</p>
           </div>
         ) : (
           <GanttChart

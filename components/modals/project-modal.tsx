@@ -108,9 +108,9 @@ export function ProjectModal({ open, onClose, onSave, project }: ProjectModalPro
         </div>
 
         <div>
-          <label className="text-sm font-medium text-zinc-700 block mb-1.5">Опис</label>
+          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block mb-1.5">Опис</label>
           <textarea
-            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+            className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
             rows={3}
             placeholder="Короткий опис проєкту..."
             value={form.description}

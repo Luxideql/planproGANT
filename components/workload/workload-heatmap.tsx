@@ -45,30 +45,30 @@ export function WorkloadHeatmap({ workloads, fromDate, toDate }: WorkloadHeatmap
 
   if (workloads.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-100 bg-white p-12 text-center text-sm text-zinc-400">
+      <div className="rounded-xl border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-12 text-center text-sm text-zinc-400">
         Немає даних про завантаження
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-zinc-100 bg-white overflow-auto">
+    <div className="rounded-xl border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-auto">
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-white px-4 py-3 text-left text-sm font-semibold text-zinc-700 border-b border-zinc-100 w-44">
+            <th className="sticky left-0 z-10 bg-white dark:bg-zinc-800 px-4 py-3 text-left text-sm font-semibold text-zinc-700 dark:text-zinc-300 border-b border-zinc-100 dark:border-zinc-700 w-44">
               Співробітник
             </th>
             {days.map(day => (
               <th
                 key={day.toISOString()}
-                className="px-0 py-2 border-b border-zinc-100 text-center font-normal text-zinc-400 min-w-[36px]"
+                className="px-0 py-2 border-b border-zinc-100 dark:border-zinc-700 text-center font-normal text-zinc-400 dark:text-zinc-500 min-w-[36px]"
               >
                 <div>{format(day, 'EEE', { locale: uk }).slice(0, 2)}</div>
-                <div className="font-medium text-zinc-600">{format(day, 'd')}</div>
+                <div className="font-medium text-zinc-600 dark:text-zinc-400">{format(day, 'd')}</div>
               </th>
             ))}
-            <th className="px-4 py-3 border-b border-zinc-100 text-right text-xs font-semibold text-zinc-700 whitespace-nowrap">
+            <th className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700 text-right text-xs font-semibold text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
               Підсумок
             </th>
           </tr>
@@ -80,9 +80,9 @@ export function WorkloadHeatmap({ workloads, fromDate, toDate }: WorkloadHeatmap
             const hasConflicts = wl.conflicts.length > 0
 
             return (
-              <tr key={wl.employee.id} className="group hover:bg-zinc-50/50 transition-colors">
+              <tr key={wl.employee.id} className="group hover:bg-zinc-50/50 dark:hover:bg-zinc-700/30 transition-colors">
                 {/* Employee name */}
-                <td className="sticky left-0 z-10 bg-white group-hover:bg-zinc-50/50 px-4 py-2 border-b border-zinc-100">
+                <td className="sticky left-0 z-10 bg-white dark:bg-zinc-800 group-hover:bg-zinc-50/50 dark:group-hover:bg-zinc-700/30 px-4 py-2 border-b border-zinc-100 dark:border-zinc-700">
                   <div className="flex items-center gap-2">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
@@ -91,8 +91,8 @@ export function WorkloadHeatmap({ workloads, fromDate, toDate }: WorkloadHeatmap
                       {wl.employee.name.charAt(0)}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium text-zinc-800 truncate">{wl.employee.name}</div>
-                      <div className="text-[10px] text-zinc-400">{wl.employee.position}</div>
+                      <div className="font-medium text-zinc-800 dark:text-zinc-200 truncate">{wl.employee.name}</div>
+                      <div className="text-[10px] text-zinc-400 dark:text-zinc-500">{wl.employee.position}</div>
                     </div>
                   </div>
                 </td>
@@ -108,7 +108,7 @@ export function WorkloadHeatmap({ workloads, fromDate, toDate }: WorkloadHeatmap
                   const isConflict = wl.conflicts.some(c => c.date === dateStr)
 
                   return (
-                    <td key={dateStr} className="px-0.5 py-1.5 border-b border-zinc-100">
+                    <td key={dateStr} className="px-0.5 py-1.5 border-b border-zinc-100 dark:border-zinc-700">
                       <Tooltip
                         content={
                           hours > 0 ? (
@@ -139,9 +139,9 @@ export function WorkloadHeatmap({ workloads, fromDate, toDate }: WorkloadHeatmap
                 })}
 
                 {/* Summary */}
-                <td className="px-4 py-2 border-b border-zinc-100 text-right">
+                <td className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-700 text-right">
                   <div className="flex flex-col items-end gap-1">
-                    <span className="font-semibold text-zinc-800">{wl.totalPlanned}г</span>
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">{wl.totalPlanned}г</span>
                     <div className="flex gap-1">
                       {overloaded && (
                         <Badge className="bg-red-100 text-red-600">
@@ -163,7 +163,7 @@ export function WorkloadHeatmap({ workloads, fromDate, toDate }: WorkloadHeatmap
       </table>
 
       {/* Legend */}
-      <div className="px-4 py-3 border-t border-zinc-100 flex items-center gap-4 text-xs text-zinc-500">
+      <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-700 flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
         <span className="font-medium">Завантаження:</span>
         {[
           { color: '#BBF7D0', label: '< 50%' },

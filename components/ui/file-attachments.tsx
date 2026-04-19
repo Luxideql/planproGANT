@@ -102,7 +102,7 @@ export function FileAttachments({ entityType, entityId }: Props) {
       ) : (
         <ul className="space-y-1">
           {files.map(f => (
-            <li key={f.url} className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+            <li key={f.url} className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/40 px-3 py-2">
               <svg className="w-5 h-5 shrink-0 text-red-500" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2 5h4v1h-4v-1zm0-2h6v1H11v-1zm0 4h3v1h-3v-1z"/>
               </svg>
@@ -110,7 +110,7 @@ export function FileAttachments({ entityType, entityId }: Props) {
                 href={f.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-zinc-700 hover:text-blue-600 truncate flex-1 min-w-0"
+                className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-blue-600 truncate flex-1 min-w-0"
                 title={f.name}
               >
                 {f.name}

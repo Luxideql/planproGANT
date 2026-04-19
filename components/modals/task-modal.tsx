@@ -206,9 +206,9 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
         </div>
 
         <div>
-          <label className="text-sm font-medium text-zinc-700 block mb-1.5">Опис</label>
+          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block mb-1.5">Опис</label>
           <textarea
-            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+            className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
             rows={3}
             placeholder="Додаткова інформація про задачу..."
             value={form.description}
@@ -218,15 +218,15 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
 
         {otherTasks.length > 0 && (
           <div>
-            <label className="text-sm font-medium text-zinc-700 block mb-1.5">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block mb-1.5">
               Залежності <span className="text-zinc-400 font-normal">(задача стартує після завершення обраних)</span>
             </label>
-            <div className="max-h-36 overflow-y-auto space-y-1 rounded-lg border border-zinc-200 p-2">
+            <div className="max-h-36 overflow-y-auto space-y-1 rounded-lg border border-zinc-200 dark:border-zinc-700 p-2">
               {otherTasks.map(t => {
                 const project = projects.find(p => p.id === t.projectId)
                 const checked = form.dependencies.includes(t.id)
                 return (
-                  <label key={t.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 cursor-pointer">
+                  <label key={t.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-700/50 cursor-pointer">
                     <input
                       type="checkbox"
                       className="h-3.5 w-3.5 rounded accent-blue-600"
@@ -237,7 +237,7 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
                       className="inline-block h-2 w-2 rounded-full shrink-0"
                       style={{ backgroundColor: project?.color ?? '#94A3B8' }}
                     />
-                    <span className="text-sm text-zinc-700 truncate">{t.name}</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">{t.name}</span>
                     <span className="text-xs text-zinc-400 ml-auto shrink-0">{t.endDate}</span>
                   </label>
                 )
@@ -247,7 +247,7 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
         )}
 
         {isEdit && (
-          <label className="flex items-center gap-2 text-sm text-zinc-600 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer">
             <input
               type="checkbox"
               className="h-3.5 w-3.5 rounded accent-blue-600"

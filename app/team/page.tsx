@@ -64,7 +64,7 @@ export default function TeamPage() {
       <div className="flex-1 p-6 space-y-6">
         {/* Alerts */}
         {(totalOverloaded > 0 || totalConflicts > 0) && (
-          <div className="flex items-center gap-4 rounded-xl bg-amber-50 border border-amber-200 px-5 py-3.5 text-sm text-amber-800">
+          <div className="flex items-center gap-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-5 py-3.5 text-sm text-amber-800 dark:text-amber-400">
             <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
             <div className="flex items-center gap-3">
               {totalOverloaded > 0 && <span>{totalOverloaded} днів з перевантаженням</span>}
@@ -75,10 +75,10 @@ export default function TeamPage() {
 
         {/* Employees cards */}
         {employees.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 py-20 text-center">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 py-20 text-center">
             <div className="text-4xl mb-4">👥</div>
-            <p className="text-zinc-500 font-medium">Немає співробітників</p>
-            <p className="text-zinc-400 text-sm mb-6">Додайте членів команди для планування задач</p>
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium">Немає співробітників</p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm mb-6">Додайте членів команди для планування задач</p>
             <Button onClick={() => setModal({ open: true })}>
               <Plus className="h-4 w-4" /> Додати першого співробітника
             </Button>
@@ -108,9 +108,9 @@ export default function TeamPage() {
                         </Button>
                       </div>
                     </div>
-                    <div className="font-semibold text-zinc-900">{emp.name}</div>
-                    <div className="text-xs text-zinc-500 mb-2">{emp.position || 'Без посади'}</div>
-                    <div className="text-xs text-zinc-400 mb-3">{emp.capacity}г/день</div>
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100">{emp.name}</div>
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">{emp.position || 'Без посади'}</div>
+                    <div className="text-xs text-zinc-400 dark:text-zinc-500 mb-3">{emp.capacity}г/день</div>
                     <div className="flex flex-wrap gap-1">
                       {wl && (
                         <Badge className="bg-blue-50 text-blue-600">{wl.totalPlanned}г заплановано</Badge>
@@ -133,7 +133,7 @@ export default function TeamPage() {
         {employees.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-900">Завантаження команди</h2>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Завантаження команди</h2>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" onClick={() => setWeekOffset(w => w - 1)}>
                   <ChevronLeft className="h-4 w-4" />
