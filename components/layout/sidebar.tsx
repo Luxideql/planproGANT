@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, GanttChartSquare, Users, Settings, Zap } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, GanttChartSquare, Users, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -19,10 +20,8 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-full w-60 bg-zinc-950 flex flex-col z-40">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-zinc-800">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-            <Zap className="h-4 w-4 text-white" />
-          </div>
+        <div className="flex items-center gap-3">
+          <Image src="/image-Photoroom (1).png" alt="Logo" width={36} height={36} className="shrink-0" />
           <div>
             <p className="text-sm font-bold text-white">PlanPro</p>
             <p className="text-[10px] text-zinc-500">Виробниче планування</p>
