@@ -11,8 +11,8 @@ import { isOverdue, formatDate } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const DAY_WIDTH = 32
-const ROW_HEIGHT = 40
+const DAY_WIDTH = 44
+const ROW_HEIGHT = 44
 const HEADER_HEIGHT = 72
 const LABEL_WIDTH = 240
 
@@ -279,11 +279,12 @@ export function GanttChart({
 
             {/* Vertical day lines */}
             {days.map((day, i) => {
-              if (viewMode === 'month' && day.getDate() !== 1) return null
-              if (viewMode === 'week' && day.getDay() !== 1) return null
+              const isWE = isWeekend(day)
+              const isMonday = day.getDay() === 1
               return (
-                <line key={i} x1={i * DAY_WIDTH} y1={0} x2={i * DAY_WIDTH} y2={totalHeight}
-                  stroke="#E4E4E7" strokeWidth={1} />
+                <line key={i} x1={i * DAY_WIDTH} y1={HEADER_HEIGHT} x2={i * DAY_WIDTH} y2={totalHeight}
+                  stroke={isMonday ? '#CBD5E1' : '#E4E4E7'}
+                  strokeWidth={isMonday ? 1.5 : 0.5} />
               )
             })}
 
