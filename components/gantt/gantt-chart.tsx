@@ -11,7 +11,7 @@ import { isOverdue, formatDate } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const DAY_WIDTH = 44
+const DAY_WIDTH_BY_MODE = { day: 80, week: 44, month: 20 } as const
 const ROW_HEIGHT = 44
 const HEADER_HEIGHT = 72
 const LABEL_WIDTH = 240
@@ -41,8 +41,13 @@ export function GanttChart({
   const [hoveredTask, setHoveredTask] = useState<string | null>(null)
 
   const today = new Date()
-  const rangeStart = startOfMonth(addMonths(today, viewOffset - 1))
-  const rangeEnd = endOfMonth(addMonths(today, viewOffset + 2))
+  const DAY_WIDTH = DAY_WIDTH_BY_MODE[viewMode]
+
+  // Range width depends on zoom level
+  const rangeMonthsBefore = viewMode === 'day' ? 0 : 1
+  const rangeMonthsAfter  = viewMode === 'day' ? 1 : viewMode === 'week' ? 2 : 5
+  const rangeStart = startOfMonth(addMonths(today, viewOffset - rangeMonthsBefore))
+  const rangeEnd   = endOfMonth(addMonths(today, viewOffset + rangeMonthsAfter))
 
   const days = useMemo(
     () => eachDayOfInterval({ start: rangeStart, end: rangeEnd }),
@@ -279,12 +284,14 @@ export function GanttChart({
 
             {/* Vertical day lines */}
             {days.map((day, i) => {
-              const isWE = isWeekend(day)
               const isMonday = day.getDay() === 1
+              const isFirst  = day.getDate() === 1
+              // month view: only draw on week start; day/week: every day
+              if (viewMode === 'month' && !isMonday) return null
               return (
                 <line key={i} x1={i * DAY_WIDTH} y1={HEADER_HEIGHT} x2={i * DAY_WIDTH} y2={totalHeight}
-                  stroke={isMonday ? '#CBD5E1' : '#E4E4E7'}
-                  strokeWidth={isMonday ? 1.5 : 0.5} />
+                  stroke={isFirst ? '#94A3B8' : isMonday ? '#CBD5E1' : '#E4E4E7'}
+                  strokeWidth={isFirst ? 1.5 : isMonday ? 1 : 0.5} />
               )
             })}
 
@@ -307,20 +314,37 @@ export function GanttChart({
               const x = i * DAY_WIDTH
               const isToday = isSameDay(day, today)
               const isWE = isWeekend(day)
-              if (viewMode === 'month' && day.getDate() !== 1 && day.getDate() !== 15) return null
+              const isMonday = day.getDay() === 1
+
+              // month view: show label only on Mondays (week start)
+              if (viewMode === 'month' && !isMonday) return null
+
+              const dateColor = isToday ? '#2563EB' : isWE ? '#EF4444' : '#52525B'
+              const subColor  = isToday ? '#2563EB' : isWE ? '#EF4444' : '#A1A1AA'
+
+              if (viewMode === 'month') {
+                // show "1 кві" style label for each Monday
+                return (
+                  <g key={i}>
+                    <text x={x + 4} y={46} fontSize={11} fontWeight={500}
+                      fill={dateColor} className="select-none">
+                      {format(day, 'd MMM', { locale: uk })}
+                    </text>
+                  </g>
+                )
+              }
+
               return (
                 <g key={i}>
                   <text x={x + DAY_WIDTH / 2} y={44} textAnchor="middle"
-                    fontSize={13}
-                    fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#52525B'}
-                    fontWeight={isToday ? 700 : 500}
+                    fontSize={viewMode === 'day' ? 15 : 13}
+                    fill={dateColor} fontWeight={isToday ? 700 : 500}
                     className="select-none">
                     {format(day, 'd')}
                   </text>
                   <text x={x + DAY_WIDTH / 2} y={62} textAnchor="middle"
-                    fontSize={11}
-                    fill={isToday ? '#2563EB' : isWE ? '#EF4444' : '#A1A1AA'}
-                    fontWeight={isToday ? 700 : 400}
+                    fontSize={viewMode === 'day' ? 12 : 11}
+                    fill={subColor} fontWeight={isToday ? 700 : 400}
                     className="select-none">
                     {format(day, 'EE', { locale: uk }).slice(0, 2)}
                   </text>
