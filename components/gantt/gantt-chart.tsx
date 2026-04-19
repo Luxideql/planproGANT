@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useMemo, useCallback } from 'react'
+import { useRef, useState, useMemo, useCallback, useEffect } from 'react'
 import {
   eachDayOfInterval, parseISO, format, addMonths, startOfMonth,
   endOfMonth, isSameDay, isWeekend, differenceInDays, addDays,
@@ -39,6 +39,7 @@ export function GanttChart({
   const [viewMode, setViewMode] = useState<ViewMode>('week')
   const [dragging, setDragging] = useState<{ taskId: string; startX: number; origStart: string; origEnd: string } | null>(null)
   const [hoveredTask, setHoveredTask] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const today = new Date()
   const DAY_WIDTH = DAY_WIDTH_BY_MODE[viewMode]
@@ -53,6 +54,15 @@ export function GanttChart({
     () => eachDayOfInterval({ start: rangeStart, end: rangeEnd }),
     [rangeStart, rangeEnd],
   )
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const todayIdx = days.findIndex(d => isSameDay(d, today))
+    if (todayIdx === -1) return
+    const targetX = todayIdx * DAY_WIDTH - el.clientWidth / 2 + DAY_WIDTH / 2
+    el.scrollLeft = Math.max(0, targetX)
+  }, [viewMode, viewOffset, days, DAY_WIDTH])
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects])
   const employeeMap = useMemo(() => new Map(employees.map(e => [e.id, e])), [employees])
@@ -250,7 +260,7 @@ export function GanttChart({
         </div>
 
         {/* RIGHT: scrollable timeline */}
-        <div className="overflow-x-auto flex-1">
+        <div ref={scrollRef} className="overflow-x-auto flex-1">
           <svg
             width={totalWidth}
             height={totalHeight}
