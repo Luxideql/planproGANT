@@ -42,6 +42,7 @@ export function GanttChart({
     taskId: string
     mode: 'move' | 'resize-start' | 'resize-end'
     startX: number
+    currentX: number
     origStart: string
     origEnd: string
     hasMoved: boolean
@@ -167,36 +168,52 @@ export function GanttChart({
   ) => {
     e.preventDefault()
     e.stopPropagation()
-    setDragging({ taskId: task.id, mode, startX: e.clientX, origStart: task.startDate, origEnd: task.endDate, hasMoved: false })
+    setDragging({ taskId: task.id, mode, startX: e.clientX, currentX: e.clientX, origStart: task.startDate, origEnd: task.endDate, hasMoved: false })
   }, [])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!dragging) return
     const deltaPx = e.clientX - dragging.startX
-    const deltaDays = Math.round(deltaPx / DAY_WIDTH)
-    if (deltaDays === 0) return
-
-    const task = tasks.find(t => t.id === dragging.taskId)
-    if (!task) return
-
-    setDragging(d => d ? { ...d, hasMoved: true } : d)
-
-    if (dragging.mode === 'move') {
-      const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
-      const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
-      onTaskDateChange?.(task, newStart, newEnd)
-    } else if (dragging.mode === 'resize-start') {
-      const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
-      if (newStart < dragging.origEnd) onTaskDateChange?.(task, newStart, dragging.origEnd)
-    } else if (dragging.mode === 'resize-end') {
-      const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
-      if (newEnd > dragging.origStart) onTaskDateChange?.(task, dragging.origStart, newEnd)
-    }
-  }, [dragging, tasks, onTaskDateChange])
+    if (Math.abs(deltaPx) < 3) return
+    setDragging(d => d ? { ...d, currentX: e.clientX, hasMoved: true } : d)
+  }, [dragging])
 
   const handleMouseUp = useCallback(() => {
+    if (!dragging || !dragging.hasMoved) { setDragging(null); return }
+    const deltaDays = Math.round((dragging.currentX - dragging.startX) / DAY_WIDTH)
+    const task = tasks.find(t => t.id === dragging.taskId)
+    if (task && deltaDays !== 0) {
+      if (dragging.mode === 'move') {
+        const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
+        const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+        onTaskDateChange?.(task, newStart, newEnd)
+      } else if (dragging.mode === 'resize-start') {
+        const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
+        if (newStart < dragging.origEnd) onTaskDateChange?.(task, newStart, dragging.origEnd)
+      } else if (dragging.mode === 'resize-end') {
+        const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+        if (newEnd > dragging.origStart) onTaskDateChange?.(task, dragging.origStart, newEnd)
+      }
+    }
     setDragging(null)
-  }, [])
+  }, [dragging, tasks, onTaskDateChange, DAY_WIDTH])
+
+  // Compute displayed dates during drag (preview without API call)
+  function getDragDates(task: Task): { startDate: string; endDate: string } {
+    if (!dragging || dragging.taskId !== task.id) return task
+    const deltaDays = Math.round((dragging.currentX - dragging.startX) / DAY_WIDTH)
+    if (deltaDays === 0) return task
+    if (dragging.mode === 'move') return {
+      startDate: format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd'),
+      endDate:   format(addDays(parseISO(dragging.origEnd),   deltaDays), 'yyyy-MM-dd'),
+    }
+    if (dragging.mode === 'resize-start') {
+      const newStart = format(addDays(parseISO(dragging.origStart), deltaDays), 'yyyy-MM-dd')
+      return { startDate: newStart < dragging.origEnd ? newStart : task.startDate, endDate: task.endDate }
+    }
+    const newEnd = format(addDays(parseISO(dragging.origEnd), deltaDays), 'yyyy-MM-dd')
+    return { startDate: task.startDate, endDate: newEnd > dragging.origStart ? newEnd : task.endDate }
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -398,8 +415,13 @@ export function GanttChart({
               if (row.type === 'project') return null
               const { task, project } = row
               const y = HEADER_HEIGHT + rowIdx * ROW_HEIGHT
-              const x = dayX(task.startDate)
-              const w = taskWidth(task)
+              const dragDates = getDragDates(task)
+              const x = dayX(dragDates.startDate)
+              const w = (() => {
+                const si = days.findIndex(d => isSameDay(d, parseISO(dragDates.startDate)))
+                const ei = days.findIndex(d => isSameDay(d, parseISO(dragDates.endDate)))
+                return si === -1 || ei === -1 ? 0 : (ei - si + 1) * DAY_WIDTH
+              })()
               const barY = y + 8
               const barH = ROW_HEIGHT - 16
               const overdue = isOverdue(task.endDate, task.status)
