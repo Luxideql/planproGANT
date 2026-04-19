@@ -13,7 +13,7 @@ const SHEET_NAMES = {
 const HEADERS = {
   employees: ['id', 'імя', 'посада', 'годин_на_день', 'колір'],
   projects:  ['id', 'назва', 'колір', 'статус', 'опис', 'створено'],
-  tasks:     ['id', 'проєкт_id', 'назва', 'виконавець_id', 'початок', 'кінець', 'планові_години', 'прогрес', 'статус', 'залежності', 'опис'],
+  tasks:     ['id', 'проєкт_id', 'назва', 'виконавець_id', 'початок', 'кінець', 'планові_години', 'прогрес', 'статус', 'залежності', 'опис', 'кількість'],
   worklog:   ['задача_id', 'співробітник_id', 'дата', 'години'],
 }
 
@@ -206,6 +206,7 @@ export async function getTasks(): Promise<Task[]> {
       status: raw['статус'] as Task['status'],
       dependencies: parseIds(raw['залежності']),
       description: raw['опис'],
+      quantity: parseFloat(raw['кількість']) || 0,
     }
   })
 }
@@ -216,7 +217,7 @@ export async function createTask(data: Omit<Task, 'id'>): Promise<Task> {
   await appendRow(SHEET_NAMES.tasks, [
     id, data.projectId, data.name, data.assigneeId,
     data.startDate, data.endDate, data.plannedHours,
-    data.progress, data.status, data.dependencies.join(','), data.description,
+    data.progress, data.status, data.dependencies.join(','), data.description, data.quantity ?? 0,
   ])
   return { id, ...data }
 }
@@ -228,7 +229,7 @@ export async function updateTask(task: Task): Promise<void> {
   await updateRow(SHEET_NAMES.tasks, rowIdx, [
     task.id, task.projectId, task.name, task.assigneeId,
     task.startDate, task.endDate, task.plannedHours,
-    task.progress, task.status, task.dependencies.join(','), task.description,
+    task.progress, task.status, task.dependencies.join(','), task.description, task.quantity ?? 0,
   ])
 }
 

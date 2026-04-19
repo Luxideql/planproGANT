@@ -30,6 +30,7 @@ export interface Task {
   status: TaskStatus
   dependencies: string[] // task ids
   description: string
+  quantity: number
 }
 
 export interface WorkLogEntry {

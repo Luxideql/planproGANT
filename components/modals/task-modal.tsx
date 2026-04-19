@@ -40,6 +40,7 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
     status: 'pending' as Task['status'],
     dependencies: [] as string[],
     description: '',
+    quantity: 0,
     cascade: false,
   })
   const [saving, setSaving] = useState(false)
@@ -58,6 +59,7 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
         status: task.status,
         dependencies: task.dependencies,
         description: task.description,
+        quantity: task.quantity ?? 0,
         cascade: false,
       })
     } else {
@@ -72,6 +74,7 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
         status: 'pending',
         dependencies: [],
         description: '',
+        quantity: 0,
         cascade: false,
       })
     }
@@ -102,6 +105,7 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
         status: form.status,
         dependencies: form.dependencies,
         description: form.description.trim(),
+        quantity: parseFloat(String(form.quantity)) || 0,
         ...(isEdit ? { cascade: form.cascade } : {}),
       }
       await onSave(payload as Task)
@@ -181,13 +185,20 @@ export function TaskModal({ open, onClose, onSave, task, projects, employees, al
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <Input
             label="Планові години"
             type="number"
             min="0"
             value={form.plannedHours}
             onChange={e => setForm(f => ({ ...f, plannedHours: e.target.value }))}
+          />
+          <Input
+            label="Кількість"
+            type="number"
+            min="0"
+            value={form.quantity}
+            onChange={e => setForm(f => ({ ...f, quantity: parseFloat(e.target.value) || 0 }))}
           />
           <Input
             label="Прогрес %"
