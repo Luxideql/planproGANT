@@ -33,15 +33,15 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
       onClick={e => { if (e.target === overlayRef.current) onClose() }}
     >
       <div className={cn(
-        'relative bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] w-full',
+        'relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] w-full',
         size === 'sm' && 'max-w-sm',
         size === 'md' && 'max-w-lg',
         size === 'lg' && 'max-w-2xl',
         size === 'xl' && 'max-w-4xl',
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -54,7 +54,7 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-zinc-100">
+          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800">
             {footer}
           </div>
         )}

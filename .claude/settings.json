@@ -18,11 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "out=$(npx tsc --noEmit --pretty false 2>&1 | head -30); if [ -n \"$out\" ]; then echo \"$out\"; exit 2; fi",
+            "command": "out=$(cd /c/Users/stask/Downloads/gant && npx tsc --noEmit --pretty false 2>&1 | head -30); if [ -n \"$out\" ]; then echo \"$out\"; exit 2; fi",
             "timeout": 60,
-            "asyncRewake": true,
-            "rewakeMessage": "TypeScript errors after edit:",
-            "rewakeSummary": "TypeScript errors found",
             "statusMessage": "Checking TypeScript..."
           }
         ]
