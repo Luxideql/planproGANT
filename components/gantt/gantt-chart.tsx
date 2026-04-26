@@ -6,6 +6,7 @@ import {
   endOfMonth, isSameDay, isWeekend, differenceInDays, addDays,
 } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { useTheme } from 'next-themes'
 import type { Task, Project, Employee } from '@/lib/types'
 import { isOverdue, formatDate } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -51,10 +52,30 @@ export function GanttChart({
   const scrollRef = useRef<HTMLDivElement>(null)
   const didDragRef = useRef(false)
 
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
+  const C = useMemo(() => ({
+    chartBg:      isDark ? '#18181B' : '#FAFAFA',
+    headerBg:     isDark ? '#18181B' : '#FFFFFF',
+    projectRowBg: isDark ? '#27272A' : '#F8FAFC',
+    taskRowBg:    isDark ? '#18181B' : '#FFFFFF',
+    border:       isDark ? '#3F3F46' : '#E4E4E7',
+    borderMid:    isDark ? '#52525B' : '#CBD5E1',
+    borderStrong: isDark ? '#71717A' : '#94A3B8',
+    textPrimary:  isDark ? '#F4F4F5' : '#18181B',
+    textSecondary:isDark ? '#A1A1AA' : '#3F3F46',
+    textMuted:    isDark ? '#71717A' : '#52525B',
+    textVeryMuted:isDark ? '#52525B' : '#A1A1AA',
+    todayBg:      isDark ? 'rgba(37,99,235,0.18)' : '#DBEAFE',
+    weekendBg:    isDark ? 'rgba(239,68,68,0.10)' : '#FEE2E2',
+    todayText:    '#2563EB',
+    weekendText:  isDark ? '#F87171' : '#EF4444',
+  }), [isDark])
+
   const today = new Date()
   const DAY_WIDTH = DAY_WIDTH_BY_MODE[viewMode]
 
-  // Range width depends on zoom level
   const rangeMonthsBefore = viewMode === 'day' ? 0 : 1
   const rangeMonthsAfter  = viewMode === 'day' ? 1 : viewMode === 'week' ? 2 : 5
   const rangeStart = startOfMonth(addMonths(today, viewOffset - rangeMonthsBefore))
@@ -72,7 +93,6 @@ export function GanttChart({
     if (todayIdx === -1) return
     const targetX = todayIdx * DAY_WIDTH - el.clientWidth / 2 + DAY_WIDTH / 2
     el.scrollLeft = Math.max(0, targetX)
-    // only scroll when view intentionally changes, not on every re-render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, viewOffset])
 
@@ -103,7 +123,6 @@ export function GanttChart({
   const totalWidth = days.length * DAY_WIDTH
   const totalHeight = rows.length * ROW_HEIGHT + HEADER_HEIGHT
 
-  // x position in the right (timeline) SVG — no LABEL_WIDTH offset
   function dayX(date: string | Date): number {
     const d = typeof date === 'string' ? parseISO(date) : date
     const idx = days.findIndex(day => isSameDay(day, d))
@@ -201,7 +220,6 @@ export function GanttChart({
     setDragging(null)
   }, [dragging, tasks, onTaskDateChange, DAY_WIDTH])
 
-  // Compute displayed dates during drag (preview without API call)
   function getDragDates(task: Task): { startDate: string; endDate: string } {
     if (!dragging || dragging.taskId !== task.id) return task
     const deltaDays = Math.round((dragging.currentX - dragging.startX) / DAY_WIDTH)
@@ -231,11 +249,11 @@ export function GanttChart({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-0.5">
+        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
           {(['day', 'week', 'month'] as ViewMode[]).map(mode => (
             <button
               key={mode}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${viewMode === mode ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${viewMode === mode ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
               onClick={() => setViewMode(mode)}
             >
               {mode === 'day' ? 'День' : mode === 'week' ? 'Тиждень' : 'Місяць'}
@@ -245,20 +263,20 @@ export function GanttChart({
       </div>
 
       {/* Chart */}
-      <div className="flex rounded-xl border border-zinc-200 bg-white overflow-hidden">
+      <div className="flex rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
 
         {/* LEFT: sticky label column */}
-        <div style={{ width: LABEL_WIDTH, minWidth: LABEL_WIDTH }} className="relative z-10 border-r border-zinc-200 bg-white">
+        <div style={{ width: LABEL_WIDTH, minWidth: LABEL_WIDTH }} className="relative z-10 border-r border-zinc-200 dark:border-zinc-700">
           <svg width={LABEL_WIDTH} height={totalHeight}>
             {/* Header */}
-            <rect x={0} y={0} width={LABEL_WIDTH} height={HEADER_HEIGHT} fill="white" />
-            <line x1={0} y1={HEADER_HEIGHT} x2={LABEL_WIDTH} y2={HEADER_HEIGHT} stroke="#E4E4E7" strokeWidth={1} />
+            <rect x={0} y={0} width={LABEL_WIDTH} height={HEADER_HEIGHT} fill={C.headerBg} />
+            <line x1={0} y1={HEADER_HEIGHT} x2={LABEL_WIDTH} y2={HEADER_HEIGHT} stroke={C.border} strokeWidth={1} />
 
             {/* Row grid lines */}
             {rows.map((_, i) => (
               <line key={i} x1={0} y1={HEADER_HEIGHT + (i + 1) * ROW_HEIGHT}
                 x2={LABEL_WIDTH} y2={HEADER_HEIGHT + (i + 1) * ROW_HEIGHT}
-                stroke="#E4E4E7" strokeWidth={1} />
+                stroke={C.border} strokeWidth={1} />
             ))}
 
             {/* Row labels */}
@@ -267,11 +285,11 @@ export function GanttChart({
               if (row.type === 'project') {
                 return (
                   <g key={`label-project-${row.project.id}`}>
-                    <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill="#F8FAFC" />
+                    <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill={C.projectRowBg} />
                     <rect x={4} y={y + ROW_HEIGHT / 2 - 6} width={3} height={12}
                       fill={row.project.color} rx={2} />
                     <text x={14} y={y + ROW_HEIGHT / 2 + 5} fontSize={13} fontWeight={700}
-                      fill="#18181B" className="select-none">
+                      fill={C.textPrimary} className="select-none">
                       {row.project.name}
                     </text>
                   </g>
@@ -280,13 +298,13 @@ export function GanttChart({
               const { task } = row
               return (
                 <g key={`label-task-${task.id}`}>
-                  <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill="white" />
+                  <rect x={0} y={y} width={LABEL_WIDTH} height={ROW_HEIGHT} fill={C.taskRowBg} />
                   <defs>
                     <clipPath id={`clip-label-${task.id}`}>
                       <rect x={20} y={y} width={LABEL_WIDTH - 24} height={ROW_HEIGHT} />
                     </clipPath>
                   </defs>
-                  <text x={20} y={y + ROW_HEIGHT / 2 + 5} fontSize={13} fill="#3F3F46"
+                  <text x={20} y={y + ROW_HEIGHT / 2 + 5} fontSize={13} fill={C.textSecondary}
                     className="select-none" clipPath={`url(#clip-label-${task.id})`}>
                     {task.name}
                   </text>
@@ -307,7 +325,7 @@ export function GanttChart({
             onMouseLeave={handleMouseUp}
           >
             {/* Background */}
-            <rect x={0} y={0} width={totalWidth} height={totalHeight} fill="#FAFAFA" />
+            <rect x={0} y={0} width={totalWidth} height={totalHeight} fill={C.chartBg} />
 
             {/* Day columns */}
             {days.map((day, i) => {
@@ -317,7 +335,7 @@ export function GanttChart({
               return (
                 <rect key={i} x={x} y={HEADER_HEIGHT} width={DAY_WIDTH}
                   height={totalHeight - HEADER_HEIGHT}
-                  fill={isToday ? '#DBEAFE' : isWE ? '#FEE2E2' : 'transparent'}
+                  fill={isToday ? C.todayBg : isWE ? C.weekendBg : 'transparent'}
                   opacity={isWE ? 0.7 : 1} />
               )
             })}
@@ -326,31 +344,30 @@ export function GanttChart({
             {rows.map((_, i) => (
               <line key={i} x1={0} y1={HEADER_HEIGHT + (i + 1) * ROW_HEIGHT}
                 x2={totalWidth} y2={HEADER_HEIGHT + (i + 1) * ROW_HEIGHT}
-                stroke="#E4E4E7" strokeWidth={1} />
+                stroke={C.border} strokeWidth={1} />
             ))}
 
             {/* Vertical day lines */}
             {days.map((day, i) => {
               const isMonday = day.getDay() === 1
               const isFirst  = day.getDate() === 1
-              // month view: only draw on week start; day/week: every day
               if (viewMode === 'month' && !isMonday) return null
               return (
                 <line key={i} x1={i * DAY_WIDTH} y1={HEADER_HEIGHT} x2={i * DAY_WIDTH} y2={totalHeight}
-                  stroke={isFirst ? '#94A3B8' : isMonday ? '#CBD5E1' : '#E4E4E7'}
+                  stroke={isFirst ? C.borderStrong : isMonday ? C.borderMid : C.border}
                   strokeWidth={isFirst ? 1.5 : isMonday ? 1 : 0.5} />
               )
             })}
 
             {/* Header */}
-            <rect x={0} y={0} width={totalWidth} height={HEADER_HEIGHT} fill="white" />
-            <line x1={0} y1={HEADER_HEIGHT} x2={totalWidth} y2={HEADER_HEIGHT} stroke="#E4E4E7" strokeWidth={1} />
+            <rect x={0} y={0} width={totalWidth} height={HEADER_HEIGHT} fill={C.headerBg} />
+            <line x1={0} y1={HEADER_HEIGHT} x2={totalWidth} y2={HEADER_HEIGHT} stroke={C.border} strokeWidth={1} />
 
             {/* Month labels */}
             {months.map((m, i) => (
               <g key={i}>
-                <rect x={m.x} y={0} width={m.width} height={30} fill="white" />
-                <text x={m.x + 8} y={22} fontSize={13} fontWeight={700} fill="#3F3F46" className="select-none">
+                <rect x={m.x} y={0} width={m.width} height={30} fill={C.headerBg} />
+                <text x={m.x + 8} y={22} fontSize={13} fontWeight={700} fill={C.textSecondary} className="select-none">
                   {m.label}
                 </text>
               </g>
@@ -363,14 +380,12 @@ export function GanttChart({
               const isWE = isWeekend(day)
               const isMonday = day.getDay() === 1
 
-              // month view: show label only on Mondays (week start)
               if (viewMode === 'month' && !isMonday) return null
 
-              const dateColor = isToday ? '#2563EB' : isWE ? '#EF4444' : '#52525B'
-              const subColor  = isToday ? '#2563EB' : isWE ? '#EF4444' : '#A1A1AA'
+              const dateColor = isToday ? C.todayText : isWE ? C.weekendText : C.textMuted
+              const subColor  = isToday ? C.todayText : isWE ? C.weekendText : C.textVeryMuted
 
               if (viewMode === 'month') {
-                // show "1 кві" style label for each Monday
                 return (
                   <g key={i}>
                     <text x={x + 4} y={46} fontSize={11} fontWeight={500}
@@ -381,12 +396,11 @@ export function GanttChart({
                 )
               }
 
-              const cellBg = isToday ? '#DBEAFE' : isWE ? '#FEE2E2' : 'white'
+              const cellBg = isToday ? C.todayBg : isWE ? C.weekendBg : C.headerBg
               return (
                 <g key={i}>
-                  {/* cell border */}
                   <rect x={x} y={30} width={DAY_WIDTH} height={HEADER_HEIGHT - 30}
-                    fill={cellBg} stroke="#E4E4E7" strokeWidth={0.5} />
+                    fill={cellBg} stroke={C.border} strokeWidth={0.5} />
                   <text x={x + DAY_WIDTH / 2} y={48} textAnchor="middle"
                     fontSize={viewMode === 'day' ? 16 : 14}
                     fill={dateColor} fontWeight={isToday ? 700 : 600}
@@ -517,15 +531,18 @@ export function GanttChart({
               return (
                 <g key={id}>
                   <path d={`M ${x1} ${y1} C ${midX} ${y1} ${midX} ${y2} ${x2} ${y2}`}
-                    fill="none" stroke="#94A3B8" strokeWidth={1.5}
-                    strokeDasharray="4,3" markerEnd="url(#arrowhead)" />
+                    fill="none" stroke={C.borderStrong} strokeWidth={1.5}
+                    strokeDasharray="4,3" markerEnd={`url(#arrowhead-${isDark ? 'dark' : 'light'})`} />
                 </g>
               )
             })}
 
             <defs>
-              <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <marker id="arrowhead-light" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                 <path d="M 0 0 L 6 3 L 0 6 Z" fill="#94A3B8" />
+              </marker>
+              <marker id="arrowhead-dark" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#52525B" />
               </marker>
             </defs>
           </svg>
@@ -533,7 +550,7 @@ export function GanttChart({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 text-xs text-zinc-500 px-1">
+      <div className="flex items-center gap-6 text-xs text-zinc-500 dark:text-zinc-400 px-1">
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-8 rounded-full bg-blue-500 opacity-40" />
           <span>Задача</span>
