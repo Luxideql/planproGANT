@@ -55,6 +55,11 @@ export default function GanttPage() {
 
   async function handleDateChange(task: Task, newStart: string, newEnd: string) {
     const updated = { ...task, startDate: newStart, endDate: newEnd, cascade: true }
+    // optimistic update — move bar instantly, no waiting for API
+    mutate('/api/tasks', (cur: Task[] = []) =>
+      cur.map(t => t.id === task.id ? { ...t, startDate: newStart, endDate: newEnd } : t),
+      false,
+    )
     await fetch('/api/tasks', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
